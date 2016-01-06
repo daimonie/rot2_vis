@@ -23,7 +23,7 @@ def animate(frame):
 	ax.clear ()
 	
 	frame += 1 
-	frame_max = 500.
+	frame_max = 1500.
 	 	
 	if frame % frame_max == 0:
 		jacti = np.random.rand(3,1)
