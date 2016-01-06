@@ -20,9 +20,13 @@ class Face:
 		data_x = self._points[:,0]
 		data_y = self._points[:,1]
 		data_z = self._points[:,2]
-		
-		
+		 
 		x,y,z = data_x, data_y, data_z
 		
 		
 		return x,y,z
+	def translate(self, x, y, z):
+		for i in range(0,4):
+			self._points[i, 0] += x;
+			self._points[i, 1] += y;
+			self._points[i, 2] += z;

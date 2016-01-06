@@ -6,11 +6,14 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import numpy as np
 from face import *
 from cube import *
+from dtwod import *
 
 fig = plt.figure()
 ax = fig.gca(projection='3d')
 #Incredible rotation matrix
-collection = Cube() 
+
+collection = Dtwod() 
+collection.translate( 0.0, 0.0, 0.0 );
 
 
 jacti = np.random.rand(3,1)
@@ -20,13 +23,29 @@ def animate(frame):
 	ax.clear ()
 	
 	frame += 1 
-	frame_max = 10000.
+	frame_max = 500.
+	 	
 	if frame % frame_max == 0:
 		jacti = np.random.rand(3,1)
 		print "New set of random numbers!"
 	
 	u = jacti * (frame%frame_max)/frame_max
 	
+	
+	xfreq = 10 * 2.0 * np.pi / frame_max
+	yfreq = xfreq
+	zfreq = 2.0 * xfreq
+	
+	dx = np.cos( xfreq * frame ) * np.cos( zfreq * frame ) - collection._translation[0]
+	dy = np.sin( yfreq * frame ) * np.cos( zfreq * frame ) - collection._translation[1]
+	dz = np.sin( zfreq * frame ) - collection._translation[2]
+	
+	collection.translate( dx, dy, dz);
+	 
+	if collection._translation[2] > 10:
+		plt.close()
+		raise Exception("Error in translate")
+		
 	ax.grid(b=False)
 
 	rot = np.zeros((3,3))
@@ -59,10 +78,10 @@ def animate(frame):
 	ax.set_ylim(-2, 2) 
 	ax.set_zlim(-2, 2) 
 	 
-	label_title = "Rotated for random[%.1f] =  [%.3f, %.3f, %.3f]" % ( (frame - frame % frame_max)/frame_max, u[0], u[1], u[2])
+	label_title = "Plotting [%.1f], z = %.3f" % ( (frame - frame % frame_max)/frame_max, collection._translation[2])
 	plt.title( label_title)
 	
 	return frame
 
-ani = animation.FuncAnimation(fig, animate, interval=10)
+ani = animation.FuncAnimation(fig, animate, interval=100)
 plt.show()
