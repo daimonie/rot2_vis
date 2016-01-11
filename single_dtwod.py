@@ -29,9 +29,6 @@ def animate(frame):
 		jacti = np.random.rand(3,1)
 		print "New set of random numbers!"
 	
-	u = jacti * (frame%frame_max)/frame_max
-	
-	
 	xfreq = 10 * 2.0 * np.pi / frame_max
 	yfreq = xfreq
 	zfreq = 2.0 * xfreq
@@ -50,6 +47,9 @@ def animate(frame):
 
 	rot = np.zeros((3,3))
 
+	
+	u = jacti * (frame%frame_max)/frame_max
+	
 	w = np.sqrt(1-u[0]) * np.sin( 2 * np.pi * u[1])
 	x = np.sqrt(1-u[0]) * np.cos( 2 * np.pi * u[1])
 
