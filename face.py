@@ -25,7 +25,7 @@ class Face:
 		
 		
 		return x,y,z
-	def translate(self, x, y, z):
+	def translate(self, x, y, z): 
 		for i in range(0,4):
 			self._points[i, 0] += x;
 			self._points[i, 1] += y;

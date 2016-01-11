@@ -1,14 +1,13 @@
 import numpy as np
 from face import *
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection 
 
 class Dtwod:
 	_faces = [];
 	_translation = [0., 0., 0.]
 	def __init__(self):
 		self._faces = []
-		self._translate = [0., 0., 0.]
+		self._translation = [0., 0., 0.]
 		
 		#define face
 		x1 = np.array( [0.5, -0.5, -2.0] )
@@ -43,23 +42,25 @@ class Dtwod:
 		
 		
 	def rotate(self, rotation_matrix):
+		 
+		my_location = self._translation[:] 
 		
-		my_location = self._translation[:]
-		
-		self.translate( -my_location[0],  -my_location[1],  -my_location[2] );
-		
+		self.translate( -my_location[0],  -my_location[1],  -my_location[2] ); 
+		  
 		for i in range(0,len(self._faces)): 			
 			self._faces[i].rotate(rotation_matrix)
-			
-		self.translate( my_location[0],  my_location[1],  my_location[2] );
+			  
+		self.translate( my_location[0],  my_location[1],  my_location[2] );  
+			 
 		
 	def translate(self, x, y, z):
+            
 		self._translation[0] += x;
 		self._translation[1] += y;
 		self._translation[2] += z;
 		 
 		for i in range(0,len(self._faces)):
-			self._faces[i].translate(x,y,z)		
+			self._faces[i].translate(x,y,z)	
 	def location(self):
 		print "I am located at (%.3f, %.3f, %.3f)" % ( self._translation[0],  self._translation[1],  self._translation[2])
 		
