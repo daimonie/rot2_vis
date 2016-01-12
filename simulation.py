@@ -13,16 +13,15 @@ ax = fig.gca(projection='3d')
 #Incredible rotation matrix
 
 monty = Monty()
+monty.beta = 0.05
+
 collection = [[],[],[],[]]
 for xx in range(0,4):
-    collection[xx] = []
     for yy in range(0,4):
-        collection[xx].append( Dtwod() )
-        
-        collection[xx][yy].rotate( monty.get_field_r(xx,yy))
-        
+        collection[xx].append(Dtwod())
 for xx in range(0,4): 
     for yy in range(0,4):
+        collection[xx][yy].rotate( monty.get_field_r(xx,yy)) 
         collection[xx][yy].translate(5*xx-10, 5*yy-10, 0); 
  
 def animate(frame):
@@ -32,20 +31,25 @@ def animate(frame):
         frame += 1 
         frame_max = 1
         
-        monty.perturb();
+        monty.clear()
+        monty.thermalise(times=16) 
         
-        if frame == 100:
-            monty.beta = 10000.0;
+        if frame %10 == 0:
+            monty.beta += 0.05;
+            monty.clear()
             monty.thermalise() 
-            monty.has_changed = np.ones((4,4))
         
 	for xx in range(0,4):
             for yy in range(0,4): 
-                if monty.is_animated(xx,yy):
+                if monty.is_changed(xx,yy):
                     collection[xx][yy].rotate( monty.get_field_r(xx,yy)) 
+                    if xx == 0 and yy == 0:
+                        print "Site (%d, %d) changed!" % (xx,yy)
+                        print monty.get_field_r(xx,yy) 
                 
                 plot_data = collection[xx][yy].plotData(opacity=0.95, evencolour='k', oddcolour='y') 
                 
+                print "plot %d %d jongeuh" % (xx, yy)
                 for i in range(0,len(plot_data)):
                         ax.add_collection3d(plot_data[i])
                         

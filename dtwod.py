@@ -45,19 +45,19 @@ class Dtwod:
 		 
 		my_location = self._translation[:] 
 		
-		self.translate( -my_location[0],  -my_location[1],  -my_location[2] ); 
+		self.translate( -my_location[0],  -my_location[1],  -my_location[2] ) 
 		  
 		for i in range(0,len(self._faces)): 			
 			self._faces[i].rotate(rotation_matrix)
 			  
-		self.translate( my_location[0],  my_location[1],  my_location[2] );  
+		self.translate( my_location[0],  my_location[1],  my_location[2] )  
 			 
 		
 	def translate(self, x, y, z):
             
-		self._translation[0] += x;
-		self._translation[1] += y;
-		self._translation[2] += z;
+		self._translation[0] += x
+		self._translation[1] += y
+		self._translation[2] += z
 		 
 		for i in range(0,len(self._faces)):
 			self._faces[i].translate(x,y,z)	

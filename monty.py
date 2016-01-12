@@ -105,11 +105,11 @@ class Monty:
                     
         self.thermalise();
         
-    def thermalise(self):
-        for i in range(0,5000):
+    def thermalise(self, **kwargs):
+        for i in range(0, kwargs.get('times', 1000)):
             self.perturb()
         
-    def is_animated(self, xx, yy):
+    def is_changed(self, xx, yy):
         return self.has_changed[xx][yy]
         
     def get_jactus(self, xx, yy):
@@ -138,20 +138,19 @@ class Monty:
         rot[2,2] = 1 - 2 * (x*x+y*y) 
         
         return rot
-    def perturb(self):
-        alea = np.random.randint(0, high=3, size=3);
-         
+    def clear(self): 
         self.has_changed = np.zeros((4,4))
-        #self.has_changed[random_site[0]][random_site[1]] = 1;
+    def perturb(self):
+        alea = np.random.randint(0, high=3, size=2);
+        
             
-        if alea[2] == 0:
+        alea_flip = np.random.randint(0, high=2,size=1); 
+        if alea_flip == 0:
             self.flip_r(alea[0], alea[1])
-        elif alea[2] == 1:
-            self.flip_ux(alea[0], alea[1])
-        elif alea[2] == 2:
-            self.flip_uy(alea[0], alea[1])
-        elif alea[2] == 3:
-            self.flip_uz(alea[0], alea[1])
+        elif alea_flip == 1:
+            self.flip_u(alea[0], alea[1],0)
+        elif alea_flip == 2:
+            self.flip_u(alea[0], alea[1],1) 
         
         #self.field_r[random_site[0]][random_site[1]] = np.dot( rot, np.linalg.inv(self.field_r[random_site[0]][random_site[1]])); 
     
@@ -175,15 +174,35 @@ class Monty:
         if accept == True:
             self.field_s[xx][yy] = ising
             self.field_r[xx][yy] = random_rotation
-            self.has_changed[xx][yy] = 1
-            print "Site (%d, %d) rotates" % (xx,yy)
+            self.has_changed[xx][yy] = 1 
         
-    def flip_ux( self, xx, yy ):
-        return
-    def flip_uy( self, xx, yy ):
-        return
-    def flip_uz( self, xx, yy ):
-        return
+    def flip_u( self, xx, yy, direction): 
+        alea = np.random.randint( 0, high=7, size=1); #from u bath_u
+        
+        forward_energy = 0.0
+        if direction == 0:
+            self.forward_energy( xx, yy, self.field_r[xx][yy],  self.bath_u[alea] , self.field_u[1][xx][yy], self.field_s[xx][yy]);
+        elif direction == 1:
+            self.forward_energy( xx, yy, self.field_r[xx][yy] , self.field_u[0][xx][yy],  self.bath_u[alea], self.field_s[xx][yy]);            
+        else:
+            raise Exception("flip_u says direction is unknown")
+        
+        energy_difference = self.site_energy[xx][yy] - forward_energy
+        
+        accept = False
+        
+        if energy_difference < 0:
+            accept = True;
+        else:
+            if np.exp(-self.beta * energy_difference ) > np.random.rand():
+                accept = True;
+        
+        if accept == True:
+            #self.has_changed[xx][yy] = 1 only for field_r
+            self.field_u[direction][xx][yy] = cp.deepcopy( self.bath_u[alea] )
+        
+        
+        
     def forward_energy(self, xx, yy, r, ux, uy, s):
         energy = 0.0
         
