@@ -33,7 +33,12 @@ def animate(frame):
         frame_max = 1
         
         monty.perturb();
-            
+        
+        if frame == 100:
+            monty.beta = 10000.0;
+            monty.thermalise() 
+            monty.has_changed = np.ones((4,4))
+        
 	for xx in range(0,4):
             for yy in range(0,4): 
                 if monty.is_animated(xx,yy):
@@ -44,7 +49,7 @@ def animate(frame):
                 for i in range(0,len(plot_data)):
                         ax.add_collection3d(plot_data[i])
                         
-	plt.title( "Frame %d" % frame)
+	plt.title( "Frame %d, beta=%.3f, j = diag(%.3f, %.3f, %.3f)" % (frame, monty.beta, monty.j_one, monty.j_two, monty.j_three))
                  
 	return frame
 
@@ -53,6 +58,6 @@ ax.set_xlim(-block_lim, block_lim)
 ax.set_ylim(-block_lim, block_lim) 
 ax.set_zlim(-block_lim, block_lim)  
 ax.view_init(90, 180)   
-ani = animation.FuncAnimation(fig, animate, interval=1)
+ani = animation.FuncAnimation(fig, animate, interval=100)
 
 plt.show()
