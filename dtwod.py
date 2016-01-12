@@ -4,8 +4,9 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 class Dtwod:
 	_faces = [];
-	_translation = [0., 0., 0.]
+	_translation = [0., 0., 0.] 
 	def __init__(self):
+                self.matrix_rotation = None
 		self._faces = []
 		self._translation = [0., 0., 0.]
 		
@@ -46,7 +47,7 @@ class Dtwod:
 		my_location = self._translation[:] 
 		
 		self.translate( -my_location[0],  -my_location[1],  -my_location[2] ) 
-		  
+		
 		for i in range(0,len(self._faces)): 			
 			self._faces[i].rotate(rotation_matrix)
 			  

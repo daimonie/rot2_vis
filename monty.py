@@ -141,7 +141,7 @@ class Monty:
     def clear(self): 
         self.has_changed = np.zeros((4,4))
     def perturb(self):
-        alea = np.random.randint(0, high=3, size=2);
+        alea = np.random.randint(0, high=4, size=2);
         
             
         alea_flip = np.random.randint(0, high=2,size=1); 
@@ -168,7 +168,7 @@ class Monty:
         if energy_difference < 0:
             accept = True;
         else:
-            if np.exp(-self.beta * energy_difference ) > np.random.rand():
+            if np.exp(- self.beta * energy_difference ) > np.random.rand():
                 accept = True;
         
         if accept == True:
@@ -177,7 +177,7 @@ class Monty:
             self.has_changed[xx][yy] = 1 
         
     def flip_u( self, xx, yy, direction): 
-        alea = np.random.randint( 0, high=7, size=1); #from u bath_u
+        alea = np.random.randint( 0, high=8, size=1); #from u bath_u
         
         forward_energy = 0.0
         if direction == 0:

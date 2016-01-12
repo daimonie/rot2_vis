@@ -35,27 +35,22 @@ def animate(frame):
         monty.thermalise(times=16) 
         
         if frame %10 == 0:
-            monty.beta += 0.05;
+            monty.beta += 0.5;
             monty.clear()
             monty.thermalise() 
         
 	for xx in range(0,4):
             for yy in range(0,4): 
                 if monty.is_changed(xx,yy):
-                    collection[xx][yy].rotate( monty.get_field_r(xx,yy)) 
-                    if xx == 0 and yy == 0:
-                        print "Site (%d, %d) changed!" % (xx,yy)
-                        print monty.get_field_r(xx,yy) 
+                    collection[xx][yy].rotate( monty.get_field_r(xx,yy))  
                 
-                plot_data = collection[xx][yy].plotData(opacity=0.95, evencolour='k', oddcolour='y') 
-                
-                print "plot %d %d jongeuh" % (xx, yy)
+                plot_data = collection[xx][yy].plotData(opacity=0.95, evencolour='k', oddcolour='y')                      
+                 
                 for i in range(0,len(plot_data)):
                         ax.add_collection3d(plot_data[i])
                         
 	plt.title( "Frame %d, beta=%.3f, j = diag(%.3f, %.3f, %.3f)" % (frame, monty.beta, monty.j_one, monty.j_two, monty.j_three))
                  
-	return frame
 
 block_lim = 10;
 ax.set_xlim(-block_lim, block_lim) 
