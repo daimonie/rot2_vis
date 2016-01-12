@@ -65,15 +65,15 @@ class Dtwod:
 		print "I am located at (%.3f, %.3f, %.3f)" % ( self._translation[0],  self._translation[1],  self._translation[2])
 		
 		
-	def plotData(self):
+	def plotData(self, **kwargs):
 		data = []; 
 		for i in range(0,len(self._faces)):
 			arr_x, arr_y, arr_z = self._faces[i].plotdata() 
 			vertices = [zip(arr_x,arr_y,arr_z)]
 			
-			color = 'g'
+			color = kwargs.get('evencolour', 'g')
 			if i == 1 or i == 2 or i == 4 or i == 7 or i == 9:
-				color = 'b'
+                            color = kwargs.get('oddcolour', 'w')
 			
-			data.append( Poly3DCollection( vertices, alpha=0.8, color=color))
+			data.append( Poly3DCollection( vertices, alpha=kwargs.get('opacity', 0.8), color=color))
 		return data

@@ -39,7 +39,8 @@ def animate(frame):
                 if monty.is_animated(xx,yy):
                     collection[xx][yy].rotate( monty.get_field_r(xx,yy)) 
                 
-                plot_data = collection[xx][yy].plotData() 
+                plot_data = collection[xx][yy].plotData(opacity=0.95, evencolour='k', oddcolour='y') 
+                
                 for i in range(0,len(plot_data)):
                         ax.add_collection3d(plot_data[i])
                         
