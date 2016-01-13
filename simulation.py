@@ -8,6 +8,24 @@ from face import *
 from cube import *
 from dtwod import *
 from monty import *
+#Command line arguments.
+import argparse as argparse  
+
+
+parser	= argparse.ArgumentParser(prog="Surface Plot",
+  description = "Surface plot of data file")   
+parser.add_argument('-b', '--beta', help='Beta value.', action='store', type = float, default = 0.57)    
+parser.add_argument('-x', '--jone', help='J1=J2 value.', action='store', type = float, default = 0.57)     
+parser.add_argument('-z', '--jthree', help='J3 value.', action='store', type = float, default = 0.57)    
+args	= parser.parse_args() 
+
+
+beta    = args.beta 
+j_one    = args.jone  
+j_three   = args.jthree 
+ 
+
+
 fig = plt.figure()
 ax = fig.gca(projection='3d')
 #Incredible rotation matrix
