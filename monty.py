@@ -13,23 +13,27 @@ class Monty:
     bath_u      =  None
     
     site_energy = None
+    lattice_size = None
     
     def __init__(self, **kwargs):
-        print "Welcome to Monty, a 4x4 simulation of the lattice D2D model";
         
+        self.lattice_size = kwargs.get('lattice_size', 6);
+        print "Welcome to Monty, a %dx%d simulation of the lattice D2D model" % (self.lattice_size,self.lattice_size);
         #Recall that the constructor needs to set each member variable, otherwise weird stuff happens
         ising = lambda s: 2.0 * (s>0.5) - 1.0;
         
-        self.field_s = ising(np.random.rand(4,4,4))
-        self.site_energy = np.zeros((4,4,4))
-        self.field_r = np.zeros( (4,4,4,3,3) )
-        self.field_u = np.zeros( (3,4,4,4,3,3) ) 
-        self.has_changed = np.zeros((4,4,4));  
+        self.field_s = ising(np.random.rand(self.lattice_size,self.lattice_size,self.lattice_size))
+        self.site_energy = np.zeros((self.lattice_size,self.lattice_size,self.lattice_size))
+        self.field_r = np.zeros( (self.lattice_size,self.lattice_size,self.lattice_size,3,3) )
+        self.field_u = np.zeros( (3,self.lattice_size,self.lattice_size,self.lattice_size,3,3) ) 
+        self.has_changed = np.zeros((self.lattice_size,self.lattice_size,self.lattice_size));  
         
-        self.beta = kwargs.get('temperature', 0.5);
         self.j_one = -kwargs.get('jone', 0.5);
         self.j_two = -kwargs.get('jtwo', 0.5);
         self.j_three = -kwargs.get('jthree', 1.0);
+        self.beta = kwargs.get('temperature', 0.5);
+        
+        
         
         #Initialise u bath_u
         self.bath_u = np.zeros( (8,3,3) ); #This works just fine. Why didn't I use it before?
@@ -68,32 +72,14 @@ class Monty:
         self.bath_u[7][2][2] = 1;   
         
         #Initialise randomly, full chaos
-	for xx in range(0,4): 
-            for yy in range(0,4):
-                for zz in range(0,4):
-
-                    u = np.random.rand(3,1)
-        
-                    w = np.sqrt(1-u[0]) * np.sin( 2 * np.pi * u[1])
-                    x = np.sqrt(1-u[0]) * np.cos( 2 * np.pi * u[1])
-
-                    y = np.sqrt(u[0]) * np.sin( 2 * np.pi * u[2])
-                    z = np.sqrt(u[0]) * np.cos( 2 * np.pi * u[2])
-                        
-                    rot = np.zeros((3,3))
-                    rot[0,0] = 1 - 2 * (y*y+z*z)
-                    rot[0,1] = 2 * (x*y-z*w)
-                    rot[0,2] = 2 * (x*z+y*w)
-                    rot[1,0] = 2 * (x*y+z*w)
-                    rot[1,1] = 1 - 2 * (x*x+z*z)
-                    rot[1,2] = 2 * (y*z-x*w)
-                    rot[2,0] = 2 * (x*z-y*w)
-                    rot[2,1] = 2 * (y*z+x*w)
-                    rot[2,2] = 1 - 2 * (x*x+y*y) 
+	for xx in range(0,self.lattice_size): 
+            for yy in range(0,self.lattice_size):
+                for zz in range(0,self.lattice_size): 
+                    rot = self.rotation_matrix()
                     
                     self.field_r[xx][yy][zz] = cp.deepcopy(rot)
                     
-                    alea = np.random.randint(0, high=7, size=3);
+                    alea = np.random.randint(0, high=7, size=3)
                     
                     self.field_u[0][xx][yy][zz] = cp.deepcopy( self.bath_u[alea[0]] )
                     self.field_u[1][xx][yy][zz] = cp.deepcopy( self.bath_u[alea[1]] ) 
@@ -101,8 +87,7 @@ class Monty:
                     self.site_energy[xx][yy][zz] = self.forward_energy( xx, yy, zz, rot, self.field_u[0][xx][yy][zz], self.field_u[1][xx][yy][zz], self.field_u[2][xx][yy][zz], self.field_s[xx][yy][zz]);
                 
 
-        #Get to temperature 
-                    
+        #Get to temperature  
         self.thermalise();
     def no_bath(self):
         for i in range(0,8):
@@ -137,11 +122,32 @@ class Monty:
         rot[2,2] = 1 - 2 * (x*x+y*y) 
         
         return rot
-    def clear(self): 
-        self.has_changed = np.zeros((4,4,4))
-    def perturb(self):
-        alea = np.random.randint(0, high=4, size=3);
+    def rotation_matrix(self):
         
+        u = np.array([0.5, 1.0, 0.0])
+        
+        w = np.sqrt(1-u[0]) * np.sin( 2 * np.pi * u[1])
+        x = np.sqrt(1-u[0]) * np.cos( 2 * np.pi * u[1])
+
+        y = np.sqrt(u[0]) * np.sin( 2 * np.pi * u[2])
+        z = np.sqrt(u[0]) * np.cos( 2 * np.pi * u[2])
+            
+        rot = np.zeros((3,3))
+        rot[0,0] = 1 - 2 * (y*y+z*z)
+        rot[0,1] = 2 * (x*y-z*w)
+        rot[0,2] = 2 * (x*z+y*w)
+        rot[1,0] = 2 * (x*y+z*w)
+        rot[1,1] = 1 - 2 * (x*x+z*z)
+        rot[1,2] = 2 * (y*z-x*w)
+        rot[2,0] = 2 * (x*z-y*w)
+        rot[2,1] = 2 * (y*z+x*w)
+        rot[2,2] = 1 - 2 * (x*x+y*y) 
+        
+        return rot
+    def clear(self): 
+        self.has_changed = np.zeros((self.lattice_size,self.lattice_size,self.lattice_size))
+    def perturb(self):
+        alea = np.random.randint(0, high=self.lattice_size, size=3); 
             
         alea_flip = np.random.randint(0, high=2,size=1); 
         if alea_flip == 0:
@@ -150,6 +156,8 @@ class Monty:
             self.flip_u(alea[0], alea[1], alea[2],0)
         elif alea_flip == 2:
             self.flip_u(alea[0], alea[1], alea[2],1) 
+        elif alea_flip == 3:
+            self.flip_u(alea[0], alea[1], alea[2],2) 
         
         #self.field_r[random_site[0]][random_site[1]] = np.dot( rot, np.linalg.inv(self.field_r[random_site[0]][random_site[1]])); 
     
@@ -166,10 +174,10 @@ class Monty:
         
         accept = False
         
-        if energy_difference <= 0:
-            accept = True;
+        if energy_difference < 0:
+            accept = True; 
         else:
-            if np.exp(- self.beta * energy_difference ) < np.random.rand():
+            if np.exp(- self.beta * energy_difference ) > np.random.rand():
                 accept = True;
         
         if accept == True:
@@ -195,10 +203,10 @@ class Monty:
         
         accept = False
         
-        if energy_difference <= 0:
-            accept = True;
+        if energy_difference < 0:
+            accept = True; 
         else:
-            if np.exp(-self.beta * energy_difference ) < np.random.rand():
+            if np.exp(-self.beta * energy_difference ) > np.random.rand():
                 accept = True;
         
         if accept == True:
@@ -220,20 +228,20 @@ class Monty:
         z_next = zz + 1;
         z_prev = zz - 1;
         
-        if x_next > 3:
-            x_next -= 4;
+        if x_next > self.lattice_size-1:
+            x_next -= self.lattice_size;
         if x_prev < 0:
-            x_prev += 4;
+            x_prev += self.lattice_size;
             
-        if y_next > 3:
-            y_next -= 4;
+        if y_next > self.lattice_size-1:
+            y_next -= self.lattice_size;
         if y_prev < 0:
-            y_prev += 4; 
+            y_prev += self.lattice_size; 
             
-        if z_next > 3:
-            z_next -= 4;
+        if z_next > self.lattice_size -1:
+            z_next -= self.lattice_size;
         if z_prev < 0:
-            z_prev += 4; 
+            z_prev += self.lattice_size; 
         
         results = np.zeros((6,3,3));
         
