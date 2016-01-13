@@ -28,9 +28,9 @@ class Monty:
         self.bath_u = np.zeros( (8,3,3) );
         
         self.beta = kwargs.get('temperature', 0.5);
-        self.j_one = kwargs.get('jone', 0.5);
-        self.j_two = kwargs.get('jtwo', 0.5);
-        self.j_three = kwargs.get('jthree', 1.0);
+        self.j_one = -kwargs.get('jone', 0.5);
+        self.j_two = -kwargs.get('jtwo', 0.5);
+        self.j_three = -kwargs.get('jthree', 1.0);
         
         #Initialise u bath_u
         self.bath_u = np.zeros( (8,3,3) ); #This works just fine. Why didn't I use it before?
@@ -104,7 +104,9 @@ class Monty:
         #Get to temperature 
                     
         self.thermalise();
-        
+    def no_bath(self):
+        for i in range(0,8):
+            self.bath_u[i] = np.eye(3);
     def thermalise(self, **kwargs):
         for i in range(0, kwargs.get('times', 1000)):
             self.perturb()
@@ -161,20 +163,21 @@ class Monty:
         
         forward_energy = self.forward_energy( xx, yy, random_rotation, self.field_u[0][xx][yy], self.field_u[1][xx][yy], ising);
         
-        energy_difference = self.site_energy[xx][yy] - forward_energy
+        energy_difference =  forward_energy- self.site_energy[xx][yy]
         
         accept = False
         
-        if energy_difference < 0:
+        if energy_difference <= 0:
             accept = True;
         else:
-            if np.exp(- self.beta * energy_difference ) > np.random.rand():
+            if np.exp(- self.beta * energy_difference ) < np.random.rand():
                 accept = True;
         
         if accept == True:
             self.field_s[xx][yy] = ising
             self.field_r[xx][yy] = random_rotation
             self.has_changed[xx][yy] = 1 
+            self.site_energy[xx][yy] = forward_energy
         
     def flip_u( self, xx, yy, direction): 
         alea = np.random.randint( 0, high=8, size=1); #from u bath_u
@@ -187,19 +190,20 @@ class Monty:
         else:
             raise Exception("flip_u says direction is unknown")
         
-        energy_difference = self.site_energy[xx][yy] - forward_energy
+        energy_difference = forward_energy - self.site_energy[xx][yy]
         
         accept = False
         
-        if energy_difference < 0:
+        if energy_difference <= 0:
             accept = True;
         else:
-            if np.exp(-self.beta * energy_difference ) > np.random.rand():
+            if np.exp(-self.beta * energy_difference ) < np.random.rand():
                 accept = True;
         
         if accept == True:
             #self.has_changed[xx][yy] = 1 only for field_r
             self.field_u[direction][xx][yy] = cp.deepcopy( self.bath_u[alea] )
+            self.site_energy[xx][yy] = forward_energy
         
         
         
@@ -224,12 +228,12 @@ class Monty:
         
         results = np.zeros((4,3,3));
         
-        results[0] = np.dot( self.field_s[xx][y_prev] * (s * np.dot( uy, r) ), self.field_r[xx][y_prev]) 
-        results[3] = np.dot( self.field_s[x_prev][yy] * (s * np.dot( uy, r) ), self.field_r[x_prev][yy]) 
+        results[0] = np.dot( self.field_s[xx][y_prev] * (s * np.dot( uy, r) ), self.field_r[xx][y_prev].T) 
+        results[3] = np.dot( self.field_s[x_prev][yy] * (s * np.dot( uy, r) ), self.field_r[x_prev][yy].T) 
         
         
-        results[1] = np.dot(s * np.dot(self.field_u[0][x_next][yy], self.field_r[x_next][yy]), r)  
-        results[2] = np.dot(s * np.dot(self.field_u[1][xx][y_next], self.field_r[xx][y_next]), r)  
+        results[1] = np.dot(s * np.dot(self.field_u[0][x_next][yy], self.field_r[x_next][yy]), r.T)  
+        results[2] = np.dot(s * np.dot(self.field_u[1][xx][y_next], self.field_r[xx][y_next]), r.T)  
         
         for result in results:
             energy += self.j_one * result[0][0]; 
