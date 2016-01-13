@@ -26,6 +26,7 @@ j_one    = args.jone
 j_three   = args.jthree 
 nobath   = args.nobath 
  
+zz = 1;
 
 
 fig = plt.figure()
@@ -40,7 +41,7 @@ for xx in range(0,4):
         collection[xx].append(Dtwod())
 for xx in range(0,4): 
     for yy in range(0,4):
-        collection[xx][yy].rotate( monty.get_field_r(xx,yy)) 
+        collection[xx][yy].rotate( monty.get_field_r(xx,yy, zz)) 
         collection[xx][yy].translate(5*xx-10, 5*yy-10, 0); 
 
 if nobath != "bath":
@@ -48,36 +49,25 @@ if nobath != "bath":
     monty.no_bath ();
 
 def animate(frame):
-	global fig, ax, collection, jacti, energy, energy_squared
+	global fig, ax, collection, jacti, energy, energy_squared, zz
         ax.clear ()
         
         frame += 1 
         frame_max = 1
         
         monty.clear()
-        monty.thermalise(times=1600)  
-        
-        energy = 0
-        energy_squared = 0
+        monty.thermalise(times=16)   
         
 	for xx in range(0,4):
             for yy in range(0,4): 
-                if monty.is_changed(xx,yy):
-                    collection[xx][yy].rotate( monty.get_field_r(xx,yy))  
-                 
-                energy += monty.site_energy[xx][yy]
-                energy_squared += monty.site_energy[xx][yy]**2 
-                
+                if monty.is_changed(xx,yy, zz):
+                    collection[xx][yy].rotate( monty.get_field_r(xx,yy, zz))   
                 plot_data = collection[xx][yy].plotData(opacity=0.95, evencolour='k', oddcolour='y')                      
                  
                 for i in range(0,len(plot_data)):
                         ax.add_collection3d(plot_data[i])
-             
-        samples =  frame;
-        specific_heat = (energy_squared - energy**2)/samples**2 * monty.beta**2 / 16;
-        print "Frame %d: Specific heat (samples=%d) is %.5f" % ( frame, samples , specific_heat)
-        
-	plt.title( "Frame %d, beta=%.3f, j = diag(%.3f, %.3f, %.3f), specific heat (%.3f, samples %d)" % (frame, monty.beta, monty.j_one, monty.j_two, monty.j_three, specific_heat, samples))
+              
+	plt.title( "Frame %d, beta=%.3f, j = diag(%.3f, %.3f, %.3f)" % (frame, monty.beta, monty.j_one, monty.j_two, monty.j_three))
         return frame         
 
 block_lim = 10;

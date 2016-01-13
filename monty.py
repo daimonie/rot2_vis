@@ -20,12 +20,11 @@ class Monty:
         #Recall that the constructor needs to set each member variable, otherwise weird stuff happens
         ising = lambda s: 2.0 * (s>0.5) - 1.0;
         
-        self.field_s = ising(np.random.rand(4,4))
-        self.site_energy = np.zeros((4,4))
-        self.field_r = np.zeros( (4,4,3,3) )
-        self.field_u = np.zeros( (2, 4,4,3,3) ) 
-        self.has_changed = np.zeros((4,4)); 
-        self.bath_u = np.zeros( (8,3,3) );
+        self.field_s = ising(np.random.rand(4,4,4))
+        self.site_energy = np.zeros((4,4,4))
+        self.field_r = np.zeros( (4,4,4,3,3) )
+        self.field_u = np.zeros( (3,4,4,4,3,3) ) 
+        self.has_changed = np.zeros((4,4,4));  
         
         self.beta = kwargs.get('temperature', 0.5);
         self.j_one = -kwargs.get('jone', 0.5);
@@ -71,34 +70,35 @@ class Monty:
         #Initialise randomly, full chaos
 	for xx in range(0,4): 
             for yy in range(0,4):
+                for zz in range(0,4):
 
-                u = np.random.rand(3,1)
-    
-                w = np.sqrt(1-u[0]) * np.sin( 2 * np.pi * u[1])
-                x = np.sqrt(1-u[0]) * np.cos( 2 * np.pi * u[1])
+                    u = np.random.rand(3,1)
+        
+                    w = np.sqrt(1-u[0]) * np.sin( 2 * np.pi * u[1])
+                    x = np.sqrt(1-u[0]) * np.cos( 2 * np.pi * u[1])
 
-                y = np.sqrt(u[0]) * np.sin( 2 * np.pi * u[2])
-                z = np.sqrt(u[0]) * np.cos( 2 * np.pi * u[2])
+                    y = np.sqrt(u[0]) * np.sin( 2 * np.pi * u[2])
+                    z = np.sqrt(u[0]) * np.cos( 2 * np.pi * u[2])
+                        
+                    rot = np.zeros((3,3))
+                    rot[0,0] = 1 - 2 * (y*y+z*z)
+                    rot[0,1] = 2 * (x*y-z*w)
+                    rot[0,2] = 2 * (x*z+y*w)
+                    rot[1,0] = 2 * (x*y+z*w)
+                    rot[1,1] = 1 - 2 * (x*x+z*z)
+                    rot[1,2] = 2 * (y*z-x*w)
+                    rot[2,0] = 2 * (x*z-y*w)
+                    rot[2,1] = 2 * (y*z+x*w)
+                    rot[2,2] = 1 - 2 * (x*x+y*y) 
                     
-                rot = np.zeros((3,3))
-                rot[0,0] = 1 - 2 * (y*y+z*z)
-                rot[0,1] = 2 * (x*y-z*w)
-                rot[0,2] = 2 * (x*z+y*w)
-                rot[1,0] = 2 * (x*y+z*w)
-                rot[1,1] = 1 - 2 * (x*x+z*z)
-                rot[1,2] = 2 * (y*z-x*w)
-                rot[2,0] = 2 * (x*z-y*w)
-                rot[2,1] = 2 * (y*z+x*w)
-                rot[2,2] = 1 - 2 * (x*x+y*y) 
-                
-                self.field_r[xx][yy] = cp.deepcopy(rot)
-                
-                alea = np.random.randint(0, high=7, size=3);
-                
-                self.field_u[0][xx][yy] = cp.deepcopy( self.bath_u[alea[0]] )
-                self.field_u[1][xx][yy] = cp.deepcopy( self.bath_u[alea[1]] ) 
-                
-                self.site_energy[xx][yy] = self.forward_energy( xx, yy, rot, self.field_u[0][xx][yy], self.field_u[1][xx][yy], self.field_s[xx][yy]);
+                    self.field_r[xx][yy][zz] = cp.deepcopy(rot)
+                    
+                    alea = np.random.randint(0, high=7, size=3);
+                    
+                    self.field_u[0][xx][yy][zz] = cp.deepcopy( self.bath_u[alea[0]] )
+                    self.field_u[1][xx][yy][zz] = cp.deepcopy( self.bath_u[alea[1]] ) 
+                    
+                    self.site_energy[xx][yy][zz] = self.forward_energy( xx, yy, zz, rot, self.field_u[0][xx][yy][zz], self.field_u[1][xx][yy][zz], self.field_u[2][xx][yy][zz], self.field_s[xx][yy][zz]);
                 
 
         #Get to temperature 
@@ -111,13 +111,10 @@ class Monty:
         for i in range(0, kwargs.get('times', 1000)):
             self.perturb()
         
-    def is_changed(self, xx, yy):
-        return self.has_changed[xx][yy]
-        
-    def get_jactus(self, xx, yy):
-        return 0
-    def get_field_r(self, xx, yy):
-        return self.field_r[xx][yy];
+    def is_changed(self, xx, yy, zz):
+        return self.has_changed[xx][yy][zz] 
+    def get_field_r(self, xx, yy, zz):
+        return self.field_r[xx][yy][zz];
     def random_matrix(self):
         
         u = np.random.rand(3,1)
@@ -141,29 +138,31 @@ class Monty:
         
         return rot
     def clear(self): 
-        self.has_changed = np.zeros((4,4))
+        self.has_changed = np.zeros((4,4,4))
     def perturb(self):
-        alea = np.random.randint(0, high=4, size=2);
+        alea = np.random.randint(0, high=4, size=3);
         
             
         alea_flip = np.random.randint(0, high=2,size=1); 
         if alea_flip == 0:
-            self.flip_r(alea[0], alea[1])
+            self.flip_r(alea[0], alea[1], alea[2])
         elif alea_flip == 1:
-            self.flip_u(alea[0], alea[1],0)
+            self.flip_u(alea[0], alea[1], alea[2],0)
         elif alea_flip == 2:
-            self.flip_u(alea[0], alea[1],1) 
+            self.flip_u(alea[0], alea[1], alea[2],1) 
         
         #self.field_r[random_site[0]][random_site[1]] = np.dot( rot, np.linalg.inv(self.field_r[random_site[0]][random_site[1]])); 
     
-    def flip_r( self, xx, yy ):
+    def flip_r( self, xx, yy,zz ):
         
         random_rotation = self.random_matrix()
-        ising = np.random.rand()
         
-        forward_energy = self.forward_energy( xx, yy, random_rotation, self.field_u[0][xx][yy], self.field_u[1][xx][yy], ising);
+        make_ising = lambda s: 2.0 * (s>0.5) - 1.0;
+        ising = make_ising(np.random.rand())
         
-        energy_difference =  forward_energy- self.site_energy[xx][yy]
+        forward_energy = self.forward_energy( xx, yy, zz, random_rotation, self.field_u[0][xx][yy][zz], self.field_u[1][xx][yy][zz], self.field_u[2][xx][yy][zz], ising);
+        
+        energy_difference =  forward_energy- self.site_energy[xx][yy][zz]
         
         accept = False
         
@@ -174,23 +173,25 @@ class Monty:
                 accept = True;
         
         if accept == True:
-            self.field_s[xx][yy] = ising
-            self.field_r[xx][yy] = random_rotation
-            self.has_changed[xx][yy] = 1 
-            self.site_energy[xx][yy] = forward_energy
+            self.field_s[xx][yy][zz] = ising
+            self.field_r[xx][yy][zz] = random_rotation
+            self.has_changed[xx][yy][zz] = 1 
+            self.site_energy[xx][yy][zz] = forward_energy
         
-    def flip_u( self, xx, yy, direction): 
+    def flip_u( self, xx, yy, zz, direction): 
         alea = np.random.randint( 0, high=8, size=1); #from u bath_u
         
         forward_energy = 0.0
         if direction == 0:
-            self.forward_energy( xx, yy, self.field_r[xx][yy],  self.bath_u[alea] , self.field_u[1][xx][yy], self.field_s[xx][yy]);
-        elif direction == 1:
-            self.forward_energy( xx, yy, self.field_r[xx][yy] , self.field_u[0][xx][yy],  self.bath_u[alea], self.field_s[xx][yy]);            
+            self.forward_energy( xx, yy, zz, self.field_r[xx][yy][zz],  self.bath_u[alea] , self.field_u[1][xx][yy][zz], self.field_u[2][xx][yy][zz], self.field_s[xx][yy][zz]); 
+        elif direction == 0:
+            self.forward_energy( xx, yy, zz, self.field_r[xx][yy][zz],  self.field_u[0][xx][yy][zz] ,self.bath_u[alea], self.field_u[2][xx][yy][zz], self.field_s[xx][yy][zz]); 
+        elif direction == 0:
+            self.forward_energy( xx, yy, zz, self.field_r[xx][yy][zz],  self.field_u[0][xx][yy][zz] , self.field_u[1][xx][yy][zz], self.bath_u[alea], self.field_s[xx][yy][zz]); 
         else:
             raise Exception("flip_u says direction is unknown")
         
-        energy_difference = forward_energy - self.site_energy[xx][yy]
+        energy_difference = forward_energy - self.site_energy[xx][yy][zz]
         
         accept = False
         
@@ -202,12 +203,12 @@ class Monty:
         
         if accept == True:
             #self.has_changed[xx][yy] = 1 only for field_r
-            self.field_u[direction][xx][yy] = cp.deepcopy( self.bath_u[alea] )
-            self.site_energy[xx][yy] = forward_energy
+            self.field_u[direction][xx][yy][zz] = cp.deepcopy( self.bath_u[alea] )
+            self.site_energy[xx][yy][zz] = forward_energy
         
         
         
-    def forward_energy(self, xx, yy, r, ux, uy, s):
+    def forward_energy(self, xx, yy, zz, r, ux, uy, uz, s):
         energy = 0.0
         
         x_next = xx + 1;
@@ -215,6 +216,9 @@ class Monty:
         
         y_next = yy + 1;
         y_prev = yy - 1;
+        
+        z_next = zz + 1;
+        z_prev = zz - 1;
         
         if x_next > 3:
             x_next -= 4;
@@ -225,15 +229,22 @@ class Monty:
             y_next -= 4;
         if y_prev < 0:
             y_prev += 4; 
+            
+        if z_next > 3:
+            z_next -= 4;
+        if z_prev < 0:
+            z_prev += 4; 
         
-        results = np.zeros((4,3,3));
+        results = np.zeros((6,3,3));
         
-        results[0] = np.dot( self.field_s[xx][y_prev] * (s * np.dot( uy, r) ), self.field_r[xx][y_prev].T) 
-        results[3] = np.dot( self.field_s[x_prev][yy] * (s * np.dot( uy, r) ), self.field_r[x_prev][yy].T) 
+        results[0] = np.dot( self.field_s[xx][y_prev][zz] * (s * np.dot( uy, r) ), self.field_r[xx][y_prev][zz].T) 
+        results[1] = np.dot( self.field_s[x_prev][yy][zz] * (s * np.dot( uy, r) ), self.field_r[x_prev][yy][zz].T) 
+        results[2] = np.dot( self.field_s[xx][yy][z_prev] * (s * np.dot( uy, r) ), self.field_r[xx][yy][z_prev].T) 
         
         
-        results[1] = np.dot(s * np.dot(self.field_u[0][x_next][yy], self.field_r[x_next][yy]), r.T)  
-        results[2] = np.dot(s * np.dot(self.field_u[1][xx][y_next], self.field_r[xx][y_next]), r.T)  
+        results[3] = np.dot(s * np.dot(self.field_u[0][x_next][yy][zz], self.field_r[x_next][yy][zz]), r.T)  
+        results[4] = np.dot(s * np.dot(self.field_u[1][xx][y_next][zz], self.field_r[xx][y_next][zz]), r.T)  
+        results[5] = np.dot(s * np.dot(self.field_u[2][xx][yy][z_next], self.field_r[xx][yy][z_next]), r.T)  
         
         for result in results:
             energy += self.j_one * result[0][0]; 
