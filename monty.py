@@ -170,17 +170,9 @@ class Monty:
         
         forward_energy = self.forward_energy( xx, yy, zz, random_rotation, self.field_u[0][xx][yy][zz], self.field_u[1][xx][yy][zz], self.field_u[2][xx][yy][zz], ising);
         
-        energy_difference =  forward_energy- self.site_energy[xx][yy][zz]
+        energy_difference =  forward_energy- self.site_energy[xx][yy][zz] 
         
-        accept = False
-        
-        if energy_difference < 0:
-            accept = True; 
-        else:
-            if np.exp(- self.beta * energy_difference ) > np.random.rand():
-                accept = True;
-        
-        if accept == True:
+        if self.accept(energy_difference):
             self.field_s[xx][yy][zz] = ising
             self.field_r[xx][yy][zz] = random_rotation
             self.has_changed[xx][yy][zz] = 1 
@@ -201,21 +193,21 @@ class Monty:
         
         energy_difference = forward_energy - self.site_energy[xx][yy][zz]
         
-        accept = False
-        
-        if energy_difference < 0:
-            accept = True; 
-        else:
-            if np.exp(-self.beta * energy_difference ) > np.random.rand():
-                accept = True;
-        
-        if accept == True:
+        if self.accept(energy_difference):
             #self.has_changed[xx][yy] = 1 only for field_r
             self.field_u[direction][xx][yy][zz] = cp.deepcopy( self.bath_u[alea] )
             self.site_energy[xx][yy][zz] = forward_energy
         
+    def accept(self, energy_difference):
+        result = True;
         
-        
+        if energy_difference >= 0:
+            result = False;
+        else:
+            if np.exp( - self.beta * energy_difference ) > np.random.rand():
+                result = True; 
+                 
+        return result; 
     def forward_energy(self, xx, yy, zz, r, ux, uy, uz, s):
         energy = 0.0
         

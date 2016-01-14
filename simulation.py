@@ -18,13 +18,15 @@ parser.add_argument('-b', '--beta', help='Beta value.', action='store', type = f
 parser.add_argument('-x', '--jone', help='J1=J2 value.', action='store', type = float, default = 0.57)     
 parser.add_argument('-z', '--jthree', help='J3 value.', action='store', type = float, default = 0.57)    
 parser.add_argument('--nobath', help='Set bath to unity.', action='store', type = str, default = "bath")    
+parser.add_argument('--lattice', help='Lattice size (L1).', action='store', type = int, default = 4)    
 args	= parser.parse_args() 
 
 
 beta    = args.beta 
-j_one    = args.jone  
-j_three   = args.jthree 
-nobath   = args.nobath 
+j_one   = args.jone  
+j_three = args.jthree 
+nobath  = args.nobath 
+lattice = args.lattice 
  
 zz = 1;
 
@@ -33,9 +35,9 @@ fig = plt.figure()
 ax = fig.gca(projection='3d')
 #Incredible rotation matrix
 
-monty = Monty(temperature=beta, jone=j_one, jtwo=j_one, jthree=j_three, lattice_size=6) 
+monty = Monty(temperature=beta, jone=j_one, jtwo=j_one, jthree=j_three, lattice_size=lattice) 
 
-monty.thermalise(times=10000)   
+monty.thermalise(times=2000)   
 
 collection = []
 for xx in range(0, monty.lattice_size):
@@ -53,30 +55,50 @@ if nobath != "bath":
 
 energy = 0.0;
 energy_squared = 0.0;
+samples = 0;
+
+print "First, estimate specific heat."
+for i in range(0,100):
+        monty.thermalise(times= monty.lattice_size**3 * 100) #length three, tau, samples
+        current_energy = monty.site_energy.sum(axis=-1).sum(axis=-1).sum(axis=-1)
+        
+        samples += 1
+        energy += current_energy
+        energy_squared += current_energy**2
+        
+        specific_heat = (energy_squared/samples - (energy/samples)**2) * monty.beta**2 /  monty.lattice_size**3 
+        print "Progress %d/100, value %.3f" % (i, specific_heat)
+        
+print "Visualising..."
 def animate(frame):
-	global fig, ax, collection, jacti, energy, energy_squared, zz, beta
+	global fig, ax, collection, jacti, energy, energy_squared, zz, beta, samples
         ax.clear ()
         
         frame += 1 
         frame_max = 1
          
         monty.clear()
-        monty.thermalise(times=2500)   
+        #monty.thermalise(times=2500)    
+        monty.thermalise(times= monty.lattice_size**3 * 100) #length three, tau, samples
+        current_energy = monty.site_energy.sum(axis=-1).sum(axis=-1).sum(axis=-1)
+        
+        samples += 1
+        energy += current_energy
+        energy_squared += current_energy**2
+        
+        specific_heat = (energy_squared/samples - (energy/samples)**2) * monty.beta**2 /  monty.lattice_size**3  
+        
 	for xx in range(0,monty.lattice_size):
             for yy in range(0,monty.lattice_size): 
                 if monty.is_changed(xx,yy, zz):
                     collection[xx][yy].rotate( monty.get_field_r(xx,yy, zz))   
                 plot_data = collection[xx][yy].plotData(opacity=0.95, evencolour='k', oddcolour='y')                      
-                
-                for hidden in range(0,monty.lattice_size):
-                    energy += monty.site_energy[xx][yy][hidden]
-                    energy_squared += monty.site_energy[xx][yy][hidden]**2
+                 
                 
                 for i in range(0,len(plot_data)):
                         ax.add_collection3d(plot_data[i])
-              
-        specific_heat = (energy_squared/frame - (energy/frame)**2) * monty.beta**2 / (monty.lattice_size**3)
-	plt.title( "Beta=%.3f, j = diag(%.3f, %.3f, %.3f), specific heat[%d] %.4f" % (monty.beta, monty.j_one, monty.j_two, monty.j_three, frame, specific_heat))
+                
+	plt.title( "%.3f, %.3f, %.3f, %d, %.3f, %.3f, %.3f, samples %d" % (monty.beta, energy/samples/monty.lattice_size**3, specific_heat, samples, monty.j_one, monty.j_two, monty.j_three, samples))
         return frame         
 
 block_lim = 2.5 * monty.lattice_size;
