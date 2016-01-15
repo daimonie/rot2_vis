@@ -27,7 +27,8 @@ j_one   = args.jone
 j_three = args.jthree 
 nobath  = args.nobath 
 lattice = args.lattice 
- 
+
+print "Parameters: %.3f, %.3f, %.3f, %s, %d" % (beta, j_one, j_three, nobath, lattice)
 zz = 1;
 
 
@@ -49,26 +50,24 @@ for xx in range(0,monty.lattice_size):
         collection[xx][yy].rotate( monty.get_field_r(xx,yy, zz)) 
         collection[xx][yy].translate(5*xx-10, 5*yy-10, 0); 
 
-if nobath != "bath":
-    print "Setting bath to unit matrices."
-    monty.no_bath ();
-
 energy = 0.0;
 energy_squared = 0.0;
 samples = 0;
 
-print "First, estimate specific heat."
-for i in range(0,100):
+
+for i in range(0,50):
         monty.thermalise(times= monty.lattice_size**3 * 100) #length three, tau, samples
-        current_energy = monty.site_energy.sum(axis=-1).sum(axis=-1).sum(axis=-1)
+        current_energy = monty.energy
         
         samples += 1
         energy += current_energy
         energy_squared += current_energy**2
         
         specific_heat = (energy_squared/samples - (energy/samples)**2) * monty.beta**2 /  monty.lattice_size**3 
-        print "Progress %d/100, value %.3f" % (i, specific_heat)
+                
+        print "Progress %d/100, beta=%.3f, energy %.3f, specific heat %.3f" % (i, monty.beta, energy/samples/monty.lattice_size**3 , specific_heat)
         
+raise Exception("Currently only want a C_V estimate. Beta/Energy/SpecificHeat\n0.78750000\t0.19532510\t0.61418629")
 print "Visualising..."
 def animate(frame):
 	global fig, ax, collection, jacti, energy, energy_squared, zz, beta, samples
@@ -80,7 +79,7 @@ def animate(frame):
         monty.clear()
         #monty.thermalise(times=2500)    
         monty.thermalise(times= monty.lattice_size**3 * 100) #length three, tau, samples
-        current_energy = monty.site_energy.sum(axis=-1).sum(axis=-1).sum(axis=-1)
+        current_energy = monty.energy
         
         samples += 1
         energy += current_energy
@@ -98,7 +97,7 @@ def animate(frame):
                 for i in range(0,len(plot_data)):
                         ax.add_collection3d(plot_data[i])
                 
-	plt.title( "%.3f, %.3f, %.3f, %d, %.3f, %.3f, %.3f, samples %d" % (monty.beta, energy/samples/monty.lattice_size**3, specific_heat, samples, monty.j_one, monty.j_two, monty.j_three, samples))
+	plt.title( "%.3f, %.3f, %.3f, %d, %.3f, %.3f, %.3f, samples %d, lattice_size %d" % (monty.beta, energy/samples/monty.ground/monty.lattice_size**3, specific_heat, samples, monty.j_one, monty.j_two, monty.j_three, samples, monty.lattice_size))
         return frame         
 
 block_lim = 2.5 * monty.lattice_size;

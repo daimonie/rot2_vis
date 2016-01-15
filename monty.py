@@ -15,10 +15,16 @@ class Monty:
     site_energy = None
     lattice_size = None
     
+    energy = None
+    ground = None
+    
     def __init__(self, **kwargs):
+        self.energy = 0.0
         
         self.lattice_size = kwargs.get('lattice_size', 6);
-        print "Welcome to Monty, a %dx%d simulation of the lattice D2D model" % (self.lattice_size,self.lattice_size);
+        
+        
+        
         #Recall that the constructor needs to set each member variable, otherwise weird stuff happens
         ising = lambda s: 2.0 * (s>0.5) - 1.0;
         
@@ -34,6 +40,8 @@ class Monty:
         self.beta = kwargs.get('temperature', 0.5);
         
         
+        print "Welcome to Monty, a %dx%d simulation of the lattice D2D model, starting at beta = %.3f" % (self.lattice_size,self.lattice_size, self.beta);
+        self.ground = self.lattice_size**3 *3*(self.j_one + self.j_two + self.j_three)
         
         #Initialise u bath_u
         self.bath_u = np.zeros( (8,3,3) ); #This works just fine. Why didn't I use it before?
@@ -75,7 +83,7 @@ class Monty:
 	for xx in range(0,self.lattice_size): 
             for yy in range(0,self.lattice_size):
                 for zz in range(0,self.lattice_size): 
-                    rot = self.rotation_matrix()
+                    rot = self.random_matrix()
                     
                     self.field_r[xx][yy][zz] = cp.deepcopy(rot)
                     
@@ -84,14 +92,15 @@ class Monty:
                     self.field_u[0][xx][yy][zz] = cp.deepcopy( self.bath_u[alea[0]] )
                     self.field_u[1][xx][yy][zz] = cp.deepcopy( self.bath_u[alea[1]] ) 
                     
+        #Neighbours need to be initialised
+	for xx in range(0,self.lattice_size): 
+            for yy in range(0,self.lattice_size):
+                for zz in range(0,self.lattice_size): 
                     self.site_energy[xx][yy][zz] = self.forward_energy( xx, yy, zz, rot, self.field_u[0][xx][yy][zz], self.field_u[1][xx][yy][zz], self.field_u[2][xx][yy][zz], self.field_s[xx][yy][zz]);
-                
+                    self.energy += self.site_energy[xx][yy][zz]
 
         #Get to temperature  
         self.thermalise();
-    def no_bath(self):
-        for i in range(0,8):
-            self.bath_u[i] = np.eye(3);
     def thermalise(self, **kwargs):
         for i in range(0, kwargs.get('times', 1000)):
             self.perturb()
@@ -101,7 +110,6 @@ class Monty:
     def get_field_r(self, xx, yy, zz):
         return self.field_r[xx][yy][zz];
     def random_matrix(self):
-        
         u = np.random.rand(3,1)
 
         w = np.sqrt(1-u[0]) * np.sin( 2 * np.pi * u[1])
@@ -123,7 +131,7 @@ class Monty:
         
         return rot
     def rotation_matrix(self):
-        
+        raise Exception("Should not be called")
         u = np.array([0.5, 1.0, 0.0])
         
         w = np.sqrt(1-u[0]) * np.sin( 2 * np.pi * u[1])
@@ -170,13 +178,14 @@ class Monty:
         
         forward_energy = self.forward_energy( xx, yy, zz, random_rotation, self.field_u[0][xx][yy][zz], self.field_u[1][xx][yy][zz], self.field_u[2][xx][yy][zz], ising);
         
-        energy_difference =  forward_energy- self.site_energy[xx][yy][zz] 
-        
+        energy_difference =  forward_energy- self.site_energy[xx][yy][zz]  
         if self.accept(energy_difference):
             self.field_s[xx][yy][zz] = ising
             self.field_r[xx][yy][zz] = random_rotation
             self.has_changed[xx][yy][zz] = 1 
             self.site_energy[xx][yy][zz] = forward_energy
+            self.energy += energy_difference
+            
         
     def flip_u( self, xx, yy, zz, direction): 
         alea = np.random.randint( 0, high=8, size=1); #from u bath_u
@@ -197,19 +206,21 @@ class Monty:
             #self.has_changed[xx][yy] = 1 only for field_r
             self.field_u[direction][xx][yy][zz] = cp.deepcopy( self.bath_u[alea] )
             self.site_energy[xx][yy][zz] = forward_energy
-        
+            self.energy += energy_difference 
     def accept(self, energy_difference):
         result = True;
         
-        if energy_difference >= 0:
-            result = False;
-        else:
-            if np.exp( - self.beta * energy_difference ) > np.random.rand():
-                result = True; 
-                 
+        if energy_difference > 0: 
+            
+            result   = False;
+            boltzman = np.exp( - self.beta * energy_difference )
+            jactus   = np.random.rand()
+            
+            if boltzman > jactus: 
+                    result = True; 
         return result; 
     def forward_energy(self, xx, yy, zz, r, ux, uy, uz, s):
-        energy = 0.0
+        bond_energy = 0.0
         
         x_next = xx + 1;
         x_prev = xx - 1;
@@ -220,34 +231,34 @@ class Monty:
         z_next = zz + 1;
         z_prev = zz - 1;
         
-        if x_next > self.lattice_size-1:
+        if x_next >= self.lattice_size:
             x_next -= self.lattice_size;
         if x_prev < 0:
             x_prev += self.lattice_size;
             
-        if y_next > self.lattice_size-1:
+        if y_next >= self.lattice_size:
             y_next -= self.lattice_size;
         if y_prev < 0:
             y_prev += self.lattice_size; 
             
-        if z_next > self.lattice_size -1:
+        if z_next >= self.lattice_size:
             z_next -= self.lattice_size;
         if z_prev < 0:
             z_prev += self.lattice_size; 
+         
+        results = np.zeros((6,3,3)); 
         
-        results = np.zeros((6,3,3));
-        
-        results[0] = np.dot( self.field_s[xx][y_prev][zz] * (s * np.dot( uy, r) ), self.field_r[xx][y_prev][zz].T) 
         results[1] = np.dot( self.field_s[x_prev][yy][zz] * (s * np.dot( uy, r) ), self.field_r[x_prev][yy][zz].T) 
-        results[2] = np.dot( self.field_s[xx][yy][z_prev] * (s * np.dot( uy, r) ), self.field_r[xx][yy][z_prev].T) 
+        results[0] = np.dot( self.field_s[xx][y_prev][zz] * (s * np.dot( ux, r) ), self.field_r[xx][y_prev][zz].T) 
+        results[2] = np.dot( self.field_s[xx][yy][z_prev] * (s * np.dot( uz, r) ), self.field_r[xx][yy][z_prev].T) 
         
-        
-        results[3] = np.dot(s * np.dot(self.field_u[0][x_next][yy][zz], self.field_r[x_next][yy][zz]), r.T)  
-        results[4] = np.dot(s * np.dot(self.field_u[1][xx][y_next][zz], self.field_r[xx][y_next][zz]), r.T)  
-        results[5] = np.dot(s * np.dot(self.field_u[2][xx][yy][z_next], self.field_r[xx][yy][z_next]), r.T)  
-        
-        for result in results:
-            energy += self.j_one * result[0][0]; 
-            energy += self.j_two * result[1][1]; 
-            energy += self.j_three * result[2][2]; 
-        return energy
+        results[3] = np.dot(s * self.field_s[x_next][yy][zz] * np.dot(self.field_u[0][x_next][yy][zz], self.field_r[x_next][yy][zz]), r.T)  
+        results[4] = np.dot(s * self.field_s[xx][y_next][zz] *  np.dot(self.field_u[1][xx][y_next][zz], self.field_r[xx][y_next][zz]), r.T)  
+        results[5] = np.dot(s * self.field_s[xx][yy][z_next] *  np.dot(self.field_u[2][xx][yy][z_next], self.field_r[xx][yy][z_next]), r.T)  
+         
+        for result in results:   
+            
+            bond_energy += self.j_one * result[0][0]; 
+            bond_energy += self.j_two * result[1][1]; 
+            bond_energy += self.j_three * result[2][2];  
+        return bond_energy
