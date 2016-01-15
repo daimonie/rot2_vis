@@ -256,8 +256,7 @@ class Monty:
         results[4] = np.dot(s * self.field_s[xx][y_next][zz] *  np.dot(self.field_u[1][xx][y_next][zz], self.field_r[xx][y_next][zz]), r.T)  
         results[5] = np.dot(s * self.field_s[xx][yy][z_next] *  np.dot(self.field_u[2][xx][yy][z_next], self.field_r[xx][yy][z_next]), r.T)  
          
-        for result in results:   
-            
+        for result in results:    
             bond_energy += self.j_one * result[0][0]; 
             bond_energy += self.j_two * result[1][1]; 
             bond_energy += self.j_three * result[2][2];  
