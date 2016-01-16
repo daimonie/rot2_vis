@@ -228,11 +228,11 @@ class Monty:
          
         results = np.zeros((6,3,3)); 
          
-        results[0] = np.dot( self.field_s[x_prev][yy][zz] * (s * np.dot( ux, r) ), self.field_r[x_prev][yy][zz].T) 
-        results[1] = np.dot( self.field_s[xx][y_prev][zz] * (s * np.dot( uy, r) ), self.field_r[xx][y_prev][zz].T) 
-        results[2] = np.dot( self.field_s[xx][yy][z_prev] * (s * np.dot( uz, r) ), self.field_r[xx][yy][z_prev].T) 
+        results[0] = np.dot(s *  self.field_s[x_prev][yy][zz] * (np.dot( ux, r) ), self.field_r[x_prev][yy][zz].T) 
+        results[1] = np.dot(s *  self.field_s[xx][y_prev][zz] * (np.dot( uy, r) ), self.field_r[xx][y_prev][zz].T) 
+        results[2] = np.dot(s *  self.field_s[xx][yy][z_prev] * (np.dot( uz, r) ), self.field_r[xx][yy][z_prev].T) 
         
-        results[3] = np.dot(s * self.field_s[x_next][yy][zz] * np.dot(self.field_u[0][x_next][yy][zz], self.field_r[x_next][yy][zz]), r.T)  
+        results[3] = np.dot(s * self.field_s[x_next][yy][zz] *  np.dot(self.field_u[0][x_next][yy][zz], self.field_r[x_next][yy][zz]), r.T)  
         results[4] = np.dot(s * self.field_s[xx][y_next][zz] *  np.dot(self.field_u[1][xx][y_next][zz], self.field_r[xx][y_next][zz]), r.T)  
         results[5] = np.dot(s * self.field_s[xx][yy][z_next] *  np.dot(self.field_u[2][xx][yy][z_next], self.field_r[xx][yy][z_next]), r.T)  
          
@@ -241,4 +241,4 @@ class Monty:
             bond_energy += self.j_two * result[1][1]; 
             bond_energy += self.j_three * result[2][2];   
             
-        return bond_energy
+        return bond_energy 

@@ -18,7 +18,8 @@ parser.add_argument('-b', '--beta', help='Beta value.', action='store', type = f
 parser.add_argument('-x', '--jone', help='J1=J2 value.', action='store', type = float, default = 0.57)     
 parser.add_argument('-z', '--jthree', help='J3 value.', action='store', type = float, default = 0.57)    
 parser.add_argument('--nobath', help='Set bath to unity.', action='store', type = str, default = "bath")    
-parser.add_argument('--lattice', help='Lattice size (L1).', action='store', type = int, default = 4)    
+parser.add_argument('--lattice', help='Lattice size (L1).', action='store', type = int, default = 4)     
+parser.add_argument('--calc', help='Only calculate specific heat.', action='store', type = int, default = 0)    
 args	= parser.parse_args() 
 
 
@@ -27,6 +28,7 @@ j_one   = args.jone
 j_three = args.jthree 
 nobath  = args.nobath 
 lattice = args.lattice 
+calc = args.calc 
 
 print "Parameters: %.3f, %.3f, %.3f, %s, %d" % (beta, j_one, j_three, nobath, lattice)
 zz = 0;
@@ -53,17 +55,14 @@ for xx in range(0,monty.lattice_size):
 energy = 0.0;
 energy_squared = 0.0;
 samples = 0;
-if False:
-
-
+if calc != 0:
 	for i in range(0,100):
 		monty.thermalise(times= monty.lattice_size**3 * 100) #length three, tau, samples
-		current_energy = monty.energy
+		current_energy = monty.energy 
 		
 		samples += 1.
 		energy += current_energy
 		energy_squared += current_energy**2
-		print "Energy %.3f" % current_energy
 		
 		specific_heat = (energy_squared/samples - (energy/samples)**2) * monty.beta**2 /  monty.lattice_size**3 
 			
@@ -81,7 +80,7 @@ def animate(frame):
         monty.clear()
         #monty.thermalise(times=2500)    
         monty.thermalise(times= monty.lattice_size**3 * 100) #length three, tau, samples
-        current_energy = monty.energy
+        current_energy = monty.energy 
         
         samples += 1
         energy += current_energy
