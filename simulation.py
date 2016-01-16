@@ -29,7 +29,7 @@ nobath  = args.nobath
 lattice = args.lattice 
 
 print "Parameters: %.3f, %.3f, %.3f, %s, %d" % (beta, j_one, j_three, nobath, lattice)
-zz = 1;
+zz = 0;
 
 
 fig = plt.figure()
@@ -53,22 +53,24 @@ for xx in range(0,monty.lattice_size):
 energy = 0.0;
 energy_squared = 0.0;
 samples = 0;
+if False:
 
 
-for i in range(0,50):
-        monty.thermalise(times= monty.lattice_size**3 * 100) #length three, tau, samples
-        current_energy = monty.energy
-        
-        samples += 1
-        energy += current_energy
-        energy_squared += current_energy**2
-        
-        specific_heat = (energy_squared/samples - (energy/samples)**2) * monty.beta**2 /  monty.lattice_size**3 
-                
-        print "Progress %d/100, beta=%.3f, energy %.3f, specific heat %.3f" % (i, monty.beta, energy/samples/monty.lattice_size**3 , specific_heat)
-        
-raise Exception("Currently only want a C_V estimate. Beta/Energy/SpecificHeat\n0.78750000\t0.19532510\t0.61418629")
-print "Visualising..."
+	for i in range(0,100):
+		monty.thermalise(times= monty.lattice_size**3 * 100) #length three, tau, samples
+		current_energy = monty.energy
+		
+		samples += 1.
+		energy += current_energy
+		energy_squared += current_energy**2
+		print "Energy %.3f" % current_energy
+		
+		specific_heat = (energy_squared/samples - (energy/samples)**2) * monty.beta**2 /  monty.lattice_size**3 
+			
+		print "Progress %d/100, beta=%.3f, energy %.3f, specific heat %.3f" % (i, monty.beta, energy/samples/monty.ground, specific_heat)
+		
+	raise Exception("Currently only want a C_V estimate. Beta/Energy/SpecificHeat\n0.78750000\t0.19532510\t0.61418629")
+	print "Visualising..."
 def animate(frame):
 	global fig, ax, collection, jacti, energy, energy_squared, zz, beta, samples
         ax.clear ()
@@ -97,7 +99,7 @@ def animate(frame):
                 for i in range(0,len(plot_data)):
                         ax.add_collection3d(plot_data[i])
                 
-	plt.title( "%.3f, %.3f, %.3f, %d, %.3f, %.3f, %.3f, samples %d, lattice_size %d" % (monty.beta, energy/samples/monty.ground/monty.lattice_size**3, specific_heat, samples, monty.j_one, monty.j_two, monty.j_three, samples, monty.lattice_size))
+	plt.title( "%.3f, %.3f, %.3f, %d, %.3f, %.3f, %.3f, samples %d, lattice_size %d" % (monty.beta, energy/samples/monty.ground, specific_heat, samples, monty.j_one, monty.j_two, monty.j_three, samples, monty.lattice_size))
         return frame         
 
 block_lim = 2.5 * monty.lattice_size;
