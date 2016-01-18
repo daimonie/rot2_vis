@@ -1,0 +1,14 @@
+diff --git a/face.py b/face.py
+index dbe6b7b..70e6852 100644
+--- a/face.py
++++ b/face.py
+@@ -11,7 +11,8 @@ class Face:
+ 			row = self._points[i] 
+ 			
+ 			col = row.T
+-			col = np.dot(rotation_matrix, col)
++			#col = np.dot(rotation_matrix, col)
++			col = np.dot(col, rotation_matrix.T)
+ 			row = col.T   
+ 			
+ 			for j in range(0,3):
